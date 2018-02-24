@@ -1,17 +1,7 @@
 package com.udacity.georgebalasca.popularmoviesstage_1.utils;
 
-import android.content.Context;
 import android.net.Uri;
-import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
 import android.util.Log;
-import android.view.View;
-
-import com.udacity.georgebalasca.popularmoviesstage_1.MainActivity;
-
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
