@@ -53,7 +53,7 @@ public class NetUtils{
      * @param poster_path
      * @return
      */
-    public static URL getMoviePoster(String api_key_value, String poster_path) {
+    public static URL getMoviePosterURL(String api_key_value, String poster_path) {
         return buildUrl(api_key_value, null, poster_path);
     }
 
@@ -94,6 +94,7 @@ public class NetUtils{
             e.printStackTrace();
         }
 
+        // TODO: remove/comment log.
         Log.i("Built URL", url.toString());
 
         return url;
