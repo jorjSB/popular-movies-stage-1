@@ -1,5 +1,8 @@
 package com.udacity.georgebalasca.popularmoviesstage_1.utils;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.Log;
 
@@ -34,7 +37,7 @@ public class NetUtils{
     private static final String IMAGES_BASE_URL =  "image.tmdb.org";
     private static final String PATH_T =  "t";
     private static final String PATH_P =  "p";
-    private static final String MOVIE_POSTER_SIZE = "w185";
+    private static final String MOVIE_POSTER_SIZE = "w185"; //"w185"
 
 
     /**
@@ -125,5 +128,16 @@ public class NetUtils{
         } finally {
             urlConnection.disconnect();
         }
+    }
+
+    /**
+     *  Check if connection to internet is available
+     * @return
+     */
+    public static boolean isOnline(Context ctx) {
+        ConnectivityManager cm =
+                (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 }

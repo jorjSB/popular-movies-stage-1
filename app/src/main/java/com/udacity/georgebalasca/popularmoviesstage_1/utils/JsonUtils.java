@@ -69,7 +69,7 @@ public class JsonUtils {
         movie.setOriginalTitle(data.optString("title"));
         movie.setOverview(data.optString("overview"));
         movie.setReleaseDate(data.optString("release_date"));
-        movie.setPosterURL(NetUtils.getMoviePosterURL( api_key ,data.optString("backdrop_path").replaceAll("\\/","")));
+        movie.setPosterURL(NetUtils.getMoviePosterURL( api_key ,data.optString("poster_path").replaceAll("\\/","")));
 
         return movie;
     }

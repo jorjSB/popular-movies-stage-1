@@ -5,21 +5,37 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.GridView;
+import android.widget.TextView;
 
+import com.udacity.georgebalasca.popularmoviesstage_1.arrayadapters.MoviesListArrayAdapter;
 import com.udacity.georgebalasca.popularmoviesstage_1.models.Movie;
 import com.udacity.georgebalasca.popularmoviesstage_1.utils.NetUtils;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.udacity.georgebalasca.popularmoviesstage_1.utils.JsonUtils.getMoviesArray;
 
 public class MainActivity extends AppCompatActivity {
 
+    TextView noInternetTV;
+    GridView gridView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        noInternetTV = findViewById(R.id.no_internet);
+        gridView = findViewById(R.id.movies_grid);
+        }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         loadMoviesData();
     }
@@ -35,8 +51,10 @@ public class MainActivity extends AppCompatActivity {
         // NetUtils.getMoviePosterURL(getResources().getString(R.string.api_key_v3), "kqjL17yufvn9OVLyXYpvtyrFfak.jpg");
 
         // fetch result
-        new AsyncFetchData().execute(initialMoviesListURL);
-
+        if(NetUtils.isOnline(this))
+            new AsyncFetchData().execute(initialMoviesListURL);
+        else
+            noInternetTV.setVisibility(View.VISIBLE);
 
     }
 
@@ -61,16 +79,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String data) {
 
+            ArrayList<Movie> moviesArray = getMoviesArray(getResources().getString(R.string.api_key_v3), data);
             if (data != null) {
-                for (Movie movie:
-                        getMoviesArray(getResources().getString(R.string.api_key_v3), data) ) {
-                    Log.i("Title", movie.getTitle());
-                    Log.i("Poster", movie.getPosterURL().toString());
-                }
-
-                // TODO: remove or add to strings
-                Log.i("Result", data);
-
+                MoviesListArrayAdapter adapter = new MoviesListArrayAdapter(getApplicationContext(),
+                        moviesArray );
+                // attach the adapter to the GridView
+                if(adapter!= null)
+                    gridView.setAdapter(adapter);
             }else
                 // TODO: remove or add to strings
                 Log.i("Error fetching data", "Please try again");
