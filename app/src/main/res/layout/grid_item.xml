@@ -4,6 +4,7 @@
     android:layout_height="wrap_content"
     android:id="@+id/movie_poster"
     android:adjustViewBounds="true"
-    android:scaleType="centerInside">
+    android:scaleType="centerInside"
+    android:contentDescription="@string/details_poster_caption">
 
 </ImageView>

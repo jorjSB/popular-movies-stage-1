@@ -6,6 +6,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 
 /**
@@ -19,9 +20,8 @@ public class JsonUtils {
     /**
      * Returns a list with all movie objects after parsing the response to json
      *
-     * @param data
+     * @param data string fetched from url
      * @param api_key - needed to get the poster URL
-     * @return
      */
     public static ArrayList<Movie> getMoviesArray(String api_key, String data){
 
@@ -30,7 +30,7 @@ public class JsonUtils {
             return null;
 
         // try to convert string result to Json Object
-        JSONObject movies = null;
+        JSONObject movies;
         try {
             movies = new JSONObject(data);
         } catch (JSONException e) {
@@ -45,8 +45,9 @@ public class JsonUtils {
         ArrayList<Movie> moviesArray = new ArrayList<>();
 
         // add movie objects in the array created
-        for(int i=0; i<moviesJsonArray.length(); i++)
-                moviesArray.add( getMovieObjectFromJsonObject( api_key, moviesJsonArray.optJSONObject(i) ) );
+        for(int i=0; i<moviesJsonArray.length(); i++){
+            moviesArray.add( getMovieObjectFromJsonObject( api_key, moviesJsonArray.optJSONObject(i) ) );
+        }
 
         return moviesArray;
     }
@@ -54,22 +55,24 @@ public class JsonUtils {
     /**
      * Parses a jsonObject into a Movie object
      *
-     * @param data
+     * @param data - data fetched from url
      * @param api_key - needed to get the poster URL
-     * @return
      */
-    public static Movie getMovieObjectFromJsonObject(String api_key, JSONObject data){
+    private static Movie getMovieObjectFromJsonObject(String api_key, JSONObject data){
 
         Movie movie = new Movie();
 
-        movie.setVoteCount(data.optInt("vote_count"));
+        String posterUrl = NetUtils.getMoviePosterURL( api_key ,data.optString("poster_path").replaceAll("/","")).toString();
+        String posterLandUrl = NetUtils.getMoviePosterURL( api_key ,data.optString("backdrop_path").replaceAll("/","")).toString();
+
         movie.setId(data.optInt("id"));
-        movie.setVoteCount(data.optInt("vote_average"));
+        movie.setvoteAverage( BigDecimal.valueOf(data.optDouble("vote_average")).floatValue() );
         movie.setTitle(data.optString("title"));
         movie.setOriginalTitle(data.optString("title"));
         movie.setOverview(data.optString("overview"));
         movie.setReleaseDate(data.optString("release_date"));
-        movie.setPosterURL(NetUtils.getMoviePosterURL( api_key ,data.optString("poster_path").replaceAll("\\/","")));
+        movie.setPosterURL( posterUrl );
+        movie.setPosterLandURL( posterLandUrl );
 
         return movie;
     }

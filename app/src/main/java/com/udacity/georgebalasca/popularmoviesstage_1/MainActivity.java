@@ -1,10 +1,11 @@
 package com.udacity.georgebalasca.popularmoviesstage_1;
 
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.GridView;
 import android.widget.TextView;
@@ -13,17 +14,25 @@ import com.udacity.georgebalasca.popularmoviesstage_1.arrayadapters.MoviesListAr
 import com.udacity.georgebalasca.popularmoviesstage_1.models.Movie;
 import com.udacity.georgebalasca.popularmoviesstage_1.utils.NetUtils;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.udacity.georgebalasca.popularmoviesstage_1.utils.JsonUtils.getMoviesArray;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView noInternetTV;
-    GridView gridView;
+    private TextView noInternetTV;
+    private GridView gridView;
+
+    private int lastListPosition = -1;
+    private final String LIST_POSITION_STATE_KEY = "list_position_state_key";
+    private String order_by = NetUtils.SORT_BY_POPULAR;
+    private final String ORDER_BY_STATE_KEY = "order_by_state_key";
+
+    private Menu optionsMenu;
+    private ArrayList<Movie> moviesArray;
+    private final String MOVIES_ARRAY_STATE_KEY = "movies_array_state_key";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,24 +40,103 @@ public class MainActivity extends AppCompatActivity {
 
         noInternetTV = findViewById(R.id.no_internet);
         gridView = findViewById(R.id.movies_grid);
-        }
+
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
 
+        // if already have data, inflate view, else fetch data
+        if(moviesArray != null && moviesArray.size() > 0)
+            inflateGridView();
+        else
+            loadMoviesData();
+    }
+
+    @Override
+    protected void onSaveInstanceState(final Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        if(gridView != null)
+            lastListPosition = gridView.getFirstVisiblePosition();
+
+        // Save the state of item position
+        outState.putInt(LIST_POSITION_STATE_KEY, lastListPosition);
+        outState.putString(ORDER_BY_STATE_KEY, order_by);
+        outState.putParcelableArrayList(MOVIES_ARRAY_STATE_KEY, moviesArray);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(final Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        // Read the state of item position
+        lastListPosition = savedInstanceState.getInt(LIST_POSITION_STATE_KEY);
+        order_by = savedInstanceState.getString(ORDER_BY_STATE_KEY);
+        moviesArray = savedInstanceState.getParcelableArrayList(MOVIES_ARRAY_STATE_KEY);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        optionsMenu = menu;
+
+        // sets the menu item state
+        setMenuItemstate();
+
+        return true;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        // sets the global variable: order_by
+        if (id == R.id.most_popular)
+            order_by = NetUtils.SORT_BY_POPULAR;
+        else if (id == R.id.top_rated)
+            order_by = NetUtils.SORT_BY_TOP_RATED;
+
+        // fetch new data data
         loadMoviesData();
+        // sets the menu item state
+        setMenuItemstate();
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Sets the menu item clicked as disabled so the user can click only on the other options(s)
+     *
+     */
+    private void setMenuItemstate() {
+        // get the item that has to be disabled
+        MenuItem selectedMenuItem = optionsMenu.findItem(R.id.most_popular);
+        if (order_by.equals(NetUtils.SORT_BY_POPULAR))
+            selectedMenuItem  = optionsMenu.findItem(R.id.most_popular);
+        else if(order_by.equals(NetUtils.SORT_BY_TOP_RATED))
+            selectedMenuItem  = optionsMenu.findItem(R.id.top_rated);
+
+        // set the item as disabled, enable the rest
+
+        for(int i=0; i<optionsMenu.size(); i++)
+            if (optionsMenu.getItem(i).equals(selectedMenuItem ))
+                optionsMenu.getItem(i).setEnabled(false);
+            else
+                optionsMenu.getItem(i).setEnabled(true);
+
     }
 
     /**
      * Creates the initial url and loads the movie data
      *
-     * TODO: clear the unnecessary code
      */
     private void loadMoviesData() {
         // Build my URL for fetching data based on my private key, and the type of data needed!
-        URL initialMoviesListURL =  NetUtils.getMoviesListSortedUrl(getResources().getString(R.string.api_key_v3), NetUtils.SORT_BY_POPULAR);
-        // NetUtils.getMoviePosterURL(getResources().getString(R.string.api_key_v3), "kqjL17yufvn9OVLyXYpvtyrFfak.jpg");
+        URL initialMoviesListURL =  NetUtils.getMoviesListSortedUrl(getResources().getString(R.string.api_key_v3), order_by);
 
         // fetch result
         if(NetUtils.isOnline(this))
@@ -66,10 +154,7 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(URL... params) {
             try {
                 // use netUtils to fetch data from url param provided
-                String response = NetUtils.getResponseFromHttpUrl(params[0]);
-
-                return response;
-
+                return NetUtils.getResponseFromHttpUrl(params[0]);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -78,18 +163,24 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String data) {
-
-            ArrayList<Movie> moviesArray = getMoviesArray(getResources().getString(R.string.api_key_v3), data);
             if (data != null) {
-                MoviesListArrayAdapter adapter = new MoviesListArrayAdapter(getApplicationContext(),
-                        moviesArray );
-                // attach the adapter to the GridView
-                if(adapter!= null)
-                    gridView.setAdapter(adapter);
-            }else
-                // TODO: remove or add to strings
-                Log.i("Error fetching data", "Please try again");
-
+                moviesArray = getMoviesArray(getResources().getString(R.string.api_key_v3), data);
+                inflateGridView();
+            }
         }
+    }
+
+    /**
+     * Create adapter and nflate the grid view
+     */
+    private void inflateGridView() {
+        MoviesListArrayAdapter adapter = new MoviesListArrayAdapter(getApplicationContext(),
+                moviesArray );
+        // attach the adapter to the GridView
+        gridView.setAdapter(adapter);
+
+        if(lastListPosition != -1)
+            gridView.setSelection(lastListPosition);
+
     }
 }

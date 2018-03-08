@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,9 +96,6 @@ public class NetUtils{
             e.printStackTrace();
         }
 
-        // TODO: remove/comment log.
-        Log.i("Built URL", url.toString());
-
         return url;
     }
 
@@ -137,7 +133,7 @@ public class NetUtils{
     public static boolean isOnline(Context ctx) {
         ConnectivityManager cm =
                 (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        NetworkInfo netInfo = cm != null ? cm.getActiveNetworkInfo() : null;
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 }
